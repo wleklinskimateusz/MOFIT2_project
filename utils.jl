@@ -1,5 +1,3 @@
-include("const.jl")
-
 function get_length_atomic(l)
     return l / L0
 end

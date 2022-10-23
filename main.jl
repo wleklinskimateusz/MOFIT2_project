@@ -1,5 +1,5 @@
-include("utils.jl")
 include("const.jl")
+include("utils.jl")
 using Plots
 
 function print_elements()
