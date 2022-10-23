@@ -68,51 +68,51 @@ function print_node(index, element, l=L)
 
 end
 
-function f1(ksi)
-    return 0.5 * (1 - ksi)
+function f1(ξ)
+    return 0.5 * (1 - ξ)
 end
 
-function f2(ksi)
-    return 0.5 * (1 + ksi)
+function f2(ξ)
+    return 0.5 * (1 + ξ)
 end
 
-function g1(ksi_1, ksi_2)
-    return f1(ksi_1) * f1(ksi_2)
+function g1(ξ1, ξ2)
+    return f1(ξ1) * f1(ξ2)
 end
 
-function g2(ksi_1, ksi_2)
-    return f2(ksi_1) * f1(ksi_2)
+function g2(ξ1, ξ2)
+    return f2(ξ1) * f1(ξ2)
 end
 
-function g3(ksi_1, ksi_2)
-    return f1(ksi_1) * f2(ksi_2)
+function g3(ξ1, ξ2)
+    return f1(ξ1) * f2(ξ2)
 end
 
-function g4(ksi_1, ksi_2)
-    return f2(ksi_1) * f2(ksi_2)
+function g4(ξ1, ξ2)
+    return f2(ξ1) * f2(ξ2)
 end
 
-function g(i, ksi_1, ksi_2)
-    return [g1, g2, g3, g4][i](ksi_1, ksi_2)
+function g(i, ξ1, ξ2)
+    return [g1, g2, g3, g4][i](ξ1, ξ2)
 end
 
-function get_x_real(ksi_1, k, n=N)
+function get_x_real(ξ1, k, n=N)
     global_index_1 = get_global_index_node(1, k, n)
     global_index_2 = get_global_index_node(2, k, n)
     x1, _ = get_coordinates_nodes(global_index_1)
     x2, _ = get_coordinates_nodes(global_index_2)
-    return x1 * f1(ksi_1) + x2 * f2(ksi_1)
+    return x1 * f1(ξ1) + x2 * f2(ξ1)
 end
 
-function get_y_real(ksi_2, k, l=L, n=N)
+function get_y_real(ξ2, k, l=L, n=N)
     global_index_1 = get_global_index_node(3, k, n)
     global_index_3 = get_global_index_node(4, k, n)
     _, y1 = get_coordinates_nodes(global_index_1, l, n)
     _, y3 = get_coordinates_nodes(global_index_3, l, n)
-    return y1 * f1(ksi_2) + y3 * f2(ksi_2)
+    return y1 * f1(ξ2) + y3 * f2(ξ2)
 end
 
-function get_real_coordinates(ksi_1, ksi_2, k, l=L, n=N)
-    return get_x_real(ksi_1, k, n), get_y_real(ksi_2, k, l, n)
+function get_real_coordinates(ξ1, ξ2, k, l=L, n=N)
+    return get_x_real(ξ1, k, n), get_y_real(ξ2, k, l, n)
 end
 

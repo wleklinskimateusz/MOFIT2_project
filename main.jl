@@ -14,45 +14,45 @@ function print_elements()
     end
 end
 
-function get_psi_nodes(x, y, m=M, omega=OMEGA)
-    return exp(-m * omega / 2 * (x^2 + y^2))
+function get_psi_nodes(x, y, m=M, ω=OMEGA)
+    return exp(-m * ω / 2 * (x^2 + y^2))
 end
 
 function get_psi_teo()
     x_size = 20 * 2 * N + 1
     y_size = 20 * 2 * N + 1
-    psi = zeros(x_size, y_size)
+    ψ = zeros(x_size, y_size)
     for i in 1:x_size
         for j in 1:y_size
-            psi[i, j] = get_psi_nodes(i * 0.1 * L / (4 * N) - L / 2, j * 0.1 * L / (4 * N) - L / 2)
+            ψ[i, j] = get_psi_nodes(i * 0.1 * L / (4 * N) - L / 2, j * 0.1 * L / (4 * N) - L / 2)
         end
     end
-    return psi
+    return ψ
 end
 
-function get_psi(k, psi, ksi_1, ksi_2)
+function get_psi(k, ψ, ξ1, ξ2)
     output = 0
     for i in 1:4
         idx = get_global_index_node(i, k)
         row, col = find_row_col_node(idx)
-        local_psi = psi[(row-1)*20+1, (col-1)*20+1]
-        output += local_psi * g(i, ksi_1, ksi_2)
+        local_ψ = ψ[(row-1)*20+1, (col-1)*20+1]
+        output += local_ψ * g(i, ξ1, ξ2)
     end
     return output
 end
 
-function populate_nodes(psi::Matrix{Float64})
+function populate_nodes(ψ::Matrix{Float64})
     for i in 1:(2*N+1)^2
         row, col = find_row_col_node(i)
         x, y = get_coordinates_nodes(i)
-        psi[(row-1)*20+1, (col-1)*20+1] = get_psi_nodes(x, y)
+        ψ[(row-1)*20+1, (col-1)*20+1] = get_psi_nodes(x, y)
     end
 end
 
 
-function calculate_psi_element(element, psi)
-    ksi_1 = -1:0.1:1
-    ksi_2 = -1:0.1:1
+function calculate_psi_element(element, ψ)
+    ξ1 = -1:0.1:1
+    ξ2 = -1:0.1:1
     idx = get_global_index_node(1, element)
     row, col = find_row_col_node(idx)
     for i in 1:20
@@ -61,15 +61,15 @@ function calculate_psi_element(element, psi)
                 continue
             end
 
-            psi[(row-1)*20+j, (col-1)*20+i] = get_psi(element, psi, ksi_1[i], ksi_2[j])
+            ψ[(row-1)*20+j, (col-1)*20+i] = get_psi(element, ψ, ξ1[i], ξ2[j])
         end
     end
 end
 
-function plot_psi(psi, label)
+function plot_psi(ψ, label)
     x = -L/2:0.1*L/(4*N):L/2
     y = -L/2:0.1*L/(4*N):L/2
-    heatmap(x, y, psi, aspect_ratio=:equal, color=:viridis)
+    heatmap(x, y, ψ, aspect_ratio=:equal, color=:viridis)
     savefig("output/$label")
 
 end
@@ -81,13 +81,13 @@ function main()
     end
     # print_elements()
 
-    psi = zeros(20 * 2 * N + 1, 20 * 2 * N + 1)
-    populate_nodes(psi)
+    ψ = zeros(20 * 2 * N + 1, 20 * 2 * N + 1)
+    populate_nodes(ψ)
 
     for element in 1:4*N^2
-        calculate_psi_element(element, psi)
+        calculate_psi_element(element, ψ)
     end
-    plot_psi(psi, "psi")
+    plot_psi(ψ, "psi")
     plot_psi(get_psi_teo(), "psi_teo")
 end
 
