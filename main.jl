@@ -2,7 +2,24 @@ include("const.jl")
 include("utils.jl")
 using Plots
 
+function save_elements()
+    open("output/elements.csv", "w") do io
+        write(io, "element,local_node,global_node,global_index,local_index,coordinates_x,coordinates_y\n")
+        for element in 1:4*N^2
+            for local_node in 1:4
+                global_node = get_global_index_node(local_node, element)
+                global_index = get_global_index_node(local_node, element, N)
+                local_index = get_local_index_node(global_index, element, N)
+                x, y = get_coordinates_nodes(global_index)
+                write(io, "$element,$local_node,$global_node,$global_index,$local_index,$x,$y\n")
+            end
+        end
+
+    end
+end
+
 function print_elements()
+
     for element_idx in 1:4*N^2
         println("element $element_idx")
         for local_node in 1:4
@@ -80,6 +97,7 @@ function main()
         mkdir("output")
     end
     # print_elements()
+    save_elements()
 
     ψ = zeros(20 * 2 * N + 1, 20 * 2 * N + 1)
     populate_nodes(ψ)
