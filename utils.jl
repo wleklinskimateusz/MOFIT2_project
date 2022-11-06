@@ -6,10 +6,6 @@ function get_length_metric(l)
     return l * L0
 end
 
-function get_a(l=L, n=N)
-    return l / (2 * n)
-end
-
 function find_row_col(index, size)
     row = (index - 1) ÷ size + 1 # integer division
     col = (index - 1) % size + 1
@@ -38,7 +34,6 @@ function find_index_elements(row, col, n=N)
 end
 
 function get_coordinates_nodes(index, l=L, n=N)
-    a = get_a(l, n)
     row, col = find_row_col_node(index, n)
     return (col - n - 1) * a, (row - n - 1) * a
 end
@@ -114,5 +109,127 @@ end
 
 function get_real_coordinates(ξ1, ξ2, k, l=L, n=N)
     return get_x_real(ξ1, k, n), get_y_real(ξ2, k, l, n)
+end
+
+
+function get_s_element(i, j)
+    output = 0
+    for l in 1:3
+        for n in 1:3
+            output += w[l] * w[n] * g(j, p[l], p[n]) * g(i, p[l], p[n])
+        end
+    end
+    return output * a^2 / 4
+end
+
+
+function get_matrix(get_matrix_element)
+    output = zeros(4, 4)
+    for i in 1:4
+        for j in 1:4
+            output[i, j] = get_matrix_element(i, j)
+        end
+    end
+    return output
+end
+
+
+
+
+
+function dev_g_ξ_1(j, x1, x2)
+    return (g(j, x1, x2 + ε) - g(j, x1, x2 - ε)) / (2 * ε)
+end
+
+function dev_g_ξ_2(j, x1, x2)
+    return (g(j, x1 + ε, x2) - g(j, x1 - ε, x2)) / (2 * ε)
+end
+
+function get_t_element(i, j)
+    output = 0
+    for l in 1:3
+        for n in 1:3
+            output += w[l] * w[n] * (dev_g_ξ_1(j, p[l], p[n]) * dev_g_ξ_1(i, p[l], p[n]) + dev_g_ξ_2(j, p[l], p[n]) * dev_g_ξ_2(i, p[l], p[n]))
+        end
+    end
+    return output / (2 * M)
+end
+
+function get_v_element(i, j, k)
+    output = 0
+    for l in 1:3
+        for n in 1:3
+            output += (get_x_real(p[l], k)^2 + get_y_real(p[n], k)^2) * g(j, p[l], p[n]) * g(i, p[l], p[n])
+        end
+    end
+    return output * a^4 / 4 * M * OMEGA^2 / 2
+end
+
+function get_global_matrix()
+    H = zeros((2 * N + 1)^2, (2 * N + 1)^2)
+    S = zeros((2 * N + 1)^2, (2 * N + 1)^2)
+    for k in 1:4*N^2
+        for i in 1:4
+            for j in 1:4
+                global_index_1 = get_global_index_node(i, k)
+                global_index_2 = get_global_index_node(j, k)
+                H[global_index_1, global_index_2] += get_v_element(i, j, k) + get_t_element(i, j)
+                S[global_index_1, global_index_2] += get_s_element(i, j)
+            end
+        end
+    end
+    return H, S
+end
+
+function handle_removing_things(H, S, i)
+    for j in 1:(2*N+1)^2
+        H[i, j] = 0
+        H[j, i] = 0
+        S[i, j] = 0
+        S[j, i] = 0
+    end
+    S[i, i] = 1
+    H[i, i] = -bitwaPodGrunwaldem
+end
+
+function get_edge_indexes()
+    output = []
+    i = 1
+    while i <= 2 * N + 1
+        push!(output, i)
+        i += 1
+    end
+    while i <= (2 * N + 1)^2 - (2 * N + 1)
+        push!(output, i)
+        i += 2 * N
+        push!(output, i)
+        i += 1
+    end
+    while i <= (2 * N + 1)^2
+        push!(output, i)
+        i += 1
+    end
+    return output
+end
+
+function print_table(tab, n)
+    println("New TABLE:")
+    for i in 1:n
+        for j in 1:n
+            print(tab[i, j], "\t")
+        end
+        println()
+    end
+end
+
+function save_matrix_to_file(A, size, filename)
+    open("output/$filename", "w") do io
+        for i in 1:size
+            for j in 1:size
+                write(io, "$(S[i, j])\t")
+            end
+            write(io, "\n")
+        end
+    end
 end
 

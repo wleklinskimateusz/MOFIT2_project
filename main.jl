@@ -1,6 +1,8 @@
 include("const.jl")
 include("utils.jl")
 using Plots
+using LinearAlgebra
+using Dates
 
 function save_elements()
     open("output/elements.csv", "w") do io
@@ -88,17 +90,9 @@ function plot_psi(ψ, label)
     y = -L/2:0.1*L/(4*N):L/2
     heatmap(x, y, ψ, aspect_ratio=:equal, color=:viridis)
     savefig("output/$label")
-
 end
 
-function main()
-    # if output doesnt exist, create it
-    if !isdir("output")
-        mkdir("output")
-    end
-    # print_elements()
-    save_elements()
-
+function ex2()
     ψ = zeros(20 * 2 * N + 1, 20 * 2 * N + 1)
     populate_nodes(ψ)
 
@@ -108,6 +102,39 @@ function main()
     plot_psi(ψ, "psi")
     plot_psi(get_psi_teo(), "psi_teo")
 end
+
+function main()
+    # if output doesnt exist, create it
+    if !isdir("output")
+        mkdir("output")
+    end
+    # print_elements()
+    # save_elements()
+
+    # ex2()
+
+    # # ex3
+    # println(get_matrix(get_s_element))
+
+    # # ex4
+    # println(get_matrix(get_t_element))
+    H, S = get_global_matrix()
+    print_table(S, (2 * N + 1)^2)
+
+
+    edges = get_edge_indexes()
+
+    for edge in edges
+        handle_removing_things(H, S, edge)
+    end
+
+    print_table(S, (2 * N + 1)^2)
+    # write S to a file
+
+
+end
+
+
 
 
 main()
