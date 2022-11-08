@@ -5,6 +5,6 @@ const M = 0.067 # m_e
 const OMEGA = 10 / 27211.6
 const w = [5 / 9, 8 / 9, 5 / 9]
 const p = [-sqrt(3 / 5), 0, sqrt(3 / 5)]
-const a = L / (2 * N)
 const ε = 0.0001
+const R = 27211.6
 const bitwaPodGrunwaldem = 1410

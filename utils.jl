@@ -6,6 +6,10 @@ function get_length_metric(l)
     return l * L0
 end
 
+function get_a(l=L)
+    return l / (2 * N)
+end
+
 function find_row_col(index, size)
     row = (index - 1) ÷ size + 1 # integer division
     col = (index - 1) % size + 1
@@ -35,7 +39,7 @@ end
 
 function get_coordinates_nodes(index, l=L, n=N)
     row, col = find_row_col_node(index, n)
-    return (col - n - 1) * a, (row - n - 1) * a
+    return (col - n - 1) * get_a(l), (row - n - 1) * get_a(l)
 end
 
 function get_local_index_node(index, element, n=N)
@@ -60,7 +64,6 @@ function print_node(index, element, l=L)
     println("Global index: $index")
     println("Local index: $(get_local_index_node(index, element))")
     println("Coordinates: $(get_coordinates_nodes(index, l))")
-
 end
 
 function f1(ξ)
@@ -91,17 +94,17 @@ function g(i, ξ1, ξ2)
     return [g1, g2, g3, g4][i](ξ1, ξ2)
 end
 
-function get_x_real(ξ1, k, n=N)
+function get_x_real(ξ1, k, l=L, n=N)
     global_index_1 = get_global_index_node(1, k, n)
     global_index_2 = get_global_index_node(2, k, n)
-    x1, _ = get_coordinates_nodes(global_index_1)
-    x2, _ = get_coordinates_nodes(global_index_2)
+    x1, _ = get_coordinates_nodes(global_index_1, l, n)
+    x2, _ = get_coordinates_nodes(global_index_2, l, n)
     return x1 * f1(ξ1) + x2 * f2(ξ1)
 end
 
 function get_y_real(ξ2, k, l=L, n=N)
-    global_index_1 = get_global_index_node(3, k, n)
-    global_index_3 = get_global_index_node(4, k, n)
+    global_index_1 = get_global_index_node(1, k, n)
+    global_index_3 = get_global_index_node(3, k, n)
     _, y1 = get_coordinates_nodes(global_index_1, l, n)
     _, y3 = get_coordinates_nodes(global_index_3, l, n)
     return y1 * f1(ξ2) + y3 * f2(ξ2)
@@ -112,14 +115,14 @@ function get_real_coordinates(ξ1, ξ2, k, l=L, n=N)
 end
 
 
-function get_s_element(i, j)
+function get_s_element(i, j, l=L)
     output = 0
     for l in 1:3
         for n in 1:3
             output += w[l] * w[n] * g(j, p[l], p[n]) * g(i, p[l], p[n])
         end
     end
-    return output * a^2 / 4
+    return output * get_a(l)^2 / 4
 end
 
 
@@ -132,10 +135,6 @@ function get_matrix(get_matrix_element)
     end
     return output
 end
-
-
-
-
 
 function dev_g_ξ_1(j, x1, x2)
     return (g(j, x1, x2 + ε) - g(j, x1, x2 - ε)) / (2 * ε)
@@ -155,17 +154,18 @@ function get_t_element(i, j)
     return output / (2 * M)
 end
 
-function get_v_element(i, j, k)
+function get_v_element(i, j, k, len=L)
     output = 0
     for l in 1:3
         for n in 1:3
-            output += (get_x_real(p[l], k)^2 + get_y_real(p[n], k)^2) * g(j, p[l], p[n]) * g(i, p[l], p[n])
+            output += w[l] * w[n] * g(j, p[l], p[n]) * g(i, p[l], p[n]) * (get_x_real(p[l], k, len)^2 + get_y_real(p[n], k, len)^2)
         end
     end
-    return output * a^4 / 4 * M * OMEGA^2 / 2
+    return get_a(len)^2 / 4 * M * OMEGA^2 / 2 * output
+
 end
 
-function get_global_matrix()
+function get_global_matrix(l=L)
     H = zeros((2 * N + 1)^2, (2 * N + 1)^2)
     S = zeros((2 * N + 1)^2, (2 * N + 1)^2)
     for k in 1:4*N^2
@@ -173,8 +173,8 @@ function get_global_matrix()
             for j in 1:4
                 global_index_1 = get_global_index_node(i, k)
                 global_index_2 = get_global_index_node(j, k)
-                H[global_index_1, global_index_2] += get_v_element(i, j, k) + get_t_element(i, j)
-                S[global_index_1, global_index_2] += get_s_element(i, j)
+                H[global_index_1, global_index_2] += get_v_element(i, j, k, l) + get_t_element(i, j)
+                S[global_index_1, global_index_2] += get_s_element(i, j, l)
             end
         end
     end
@@ -226,7 +226,7 @@ function save_matrix_to_file(A, size, filename)
     open("output/$filename", "w") do io
         for i in 1:size
             for j in 1:size
-                write(io, "$(S[i, j])\t")
+                write(io, "$(A[i, j])\t")
             end
             write(io, "\n")
         end

@@ -13,6 +13,8 @@ function save_elements()
                 global_index = get_global_index_node(local_node, element, N)
                 local_index = get_local_index_node(global_index, element, N)
                 x, y = get_coordinates_nodes(global_index)
+                x *= L0
+                y *= L0
                 write(io, "$element,$local_node,$global_node,$global_index,$local_index,$x,$y\n")
             end
         end
@@ -20,16 +22,21 @@ function save_elements()
     end
 end
 
+function print_element(k)
+    println("element $k")
+    for local_node in 1:4
+        global_node = get_global_index_node(local_node, k)
+        println("local node: $local_node, global node: $global_node")
+        print_node(global_node, k)
+        println()
+    end
+end
+
 function print_elements()
 
     for element_idx in 1:4*N^2
-        println("element $element_idx")
-        for local_node in 1:4
-            global_node = get_global_index_node(local_node, element_idx)
-            println("local node: $local_node, global node: $global_node")
-            print_node(global_node, element_idx)
-            println()
-        end
+        print_element(element_idx)
+        println()
     end
 end
 
@@ -103,6 +110,13 @@ function ex2()
     plot_psi(get_psi_teo(), "psi_teo")
 end
 
+function solve_eigenproblem(l=L)
+    println("current l: $l")
+    H, S = get_global_matrix(l)
+    E, _ = eigen(H, S)
+    return E
+end
+
 function main()
     # if output doesnt exist, create it
     if !isdir("output")
@@ -119,7 +133,9 @@ function main()
     # # ex4
     # println(get_matrix(get_t_element))
     H, S = get_global_matrix()
-    print_table(S, (2 * N + 1)^2)
+    # print_table(S, (2 * N + 1)^2)
+    # save_matrix_to_file(S, (2 * N + 1)^2, "S_initial")
+    # save_matrix_to_file(H, (2 * N + 1)^2, "H_initial")
 
 
     edges = get_edge_indexes()
@@ -128,8 +144,41 @@ function main()
         handle_removing_things(H, S, edge)
     end
 
-    print_table(S, (2 * N + 1)^2)
+    # print_table(S, (2 * N + 1)^2)
+    # save_matrix_to_file(S, (2 * N + 1)^2, "S_final")
+    # save_matrix_to_file(H, (2 * N + 1)^2, "H_final")
+
     # write S to a file
+
+    # E, c = eigen(H, S)
+    # println(E)
+
+    matrix = zeros(4)
+
+    for i in 1:4
+        matrix[i] = get_v_element(i, i, 7) / get_s_element(i, i)
+    end
+    plot()
+    # println(matrix * R)
+    L_num = 20
+    L_start = 20
+    L_end = 200
+    L_step = (L_end - L_start) / L_num
+    E = zeros(10, L_num + 1)
+    L_arr = L_start:L_step:L_end
+    for (index, l) in enumerate(L_arr)
+        for j in 1:10
+            E[j, index] = solve_eigenproblem(l)[j]
+        end
+    end
+    for i in 1:10
+        plot!(L_arr, E[i, :], label="E$i")
+        println(E[i, :])
+    end
+    println(E)
+
+    savefig("output/eigenvalues.png")
+
 
 
 end
