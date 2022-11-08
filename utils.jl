@@ -6,9 +6,10 @@ function get_length_metric(l)
     return l * L0
 end
 
-function get_a(l=L)
+function get_a(l = L)
     return l / (2 * N)
 end
+
 
 function find_row_col(index, size)
     row = (index - 1) ÷ size + 1 # integer division
@@ -21,27 +22,45 @@ function find_index(row, col, size)
     return (row - 1) * size + col
 end
 
+"""
+Return row and column of a node given by an index.
+"""
 function find_row_col_node(index, n=N)
     return find_row_col(index, 2 * n + 1)
 end
 
+"""
+Return row and column of an element given by an index.
+"""
 function find_row_col_elements(index, n=N)
     return find_row_col(index, 2 * n)
 end
 
+"""
+Return index of a nodebased on it's row and column.
+"""
 function find_index_node(row, col, n=N)
     return find_index(row, col, 2 * n + 1)
 end
 
+"""
+Return index of an element based on it's row and column.
+"""
 function find_index_elements(row, col, n=N)
     return find_index(row, col, 2 * n)
 end
 
-function get_coordinates_nodes(index, l=L, n=N)
+"""
+Return coordinates of a node given it's index.
+"""
+function get_coordinates_nodes(index, l = L, n=N)
     row, col = find_row_col_node(index, n)
     return (col - n - 1) * get_a(l), (row - n - 1) * get_a(l)
 end
 
+"""
+Find local node in an element given it's global index.
+"""
 function get_local_index_node(index, element, n=N)
     row, col = find_row_col_node(index, n)
     row_element, col_element = find_row_col_elements(element, n)
@@ -53,6 +72,9 @@ function get_local_index_node(index, element, n=N)
     return 2 * x + y + 1
 end
 
+"""
+Find global node given it's local index and element number.
+"""
 function get_global_index_node(local_index, element, n=N)
     row_element, col_element = find_row_col_elements(element, n)
     x = (local_index - 1) ÷ 2
@@ -60,12 +82,39 @@ function get_global_index_node(local_index, element, n=N)
     return find_index_node(row_element + x, col_element + y, n)
 end
 
-function print_node(index, element, l=L)
+""""
+Print node's global index, local nidex and coordinates given it's global index.
+"""
+function print_node(index, element, l= L)
     println("Global index: $index")
     println("Local index: $(get_local_index_node(index, element))")
     println("Coordinates: $(get_coordinates_nodes(index, l))")
 end
 
+"""
+Print information about all nodes in an element.
+"""
+function print_element(k)
+    println("element $k")
+    for local_node in 1:4
+        global_node = get_global_index_node(local_node, k)
+        println("local node: $local_node, global node: $global_node")
+        print_node(global_node, k)
+        println()
+    end
+end
+
+"""
+Print information about all elements.
+"""
+function print_elements(n = N)
+    for element_idx in 1:4*n^2
+        print_element(element_idx)
+        println()
+    end
+end
+
+# --------------------- BASE FUNCTIONS ---------------------
 function f1(ξ)
     return 0.5 * (1 - ξ)
 end
@@ -94,7 +143,10 @@ function g(i, ξ1, ξ2)
     return [g1, g2, g3, g4][i](ξ1, ξ2)
 end
 
-function get_x_real(ξ1, k, l=L, n=N)
+"""
+Compute 'x' value in real space based on coordinates in x direction in frame of reference.
+"""
+function get_x_real(ξ1, k, l = L, n=N)
     global_index_1 = get_global_index_node(1, k, n)
     global_index_2 = get_global_index_node(2, k, n)
     x1, _ = get_coordinates_nodes(global_index_1, l, n)
@@ -102,7 +154,10 @@ function get_x_real(ξ1, k, l=L, n=N)
     return x1 * f1(ξ1) + x2 * f2(ξ1)
 end
 
-function get_y_real(ξ2, k, l=L, n=N)
+"""
+Compute 'y' value in real space based on coordinates in y direction in frame of reference.
+"""
+function get_y_real(ξ2, k, l = L, n=N)
     global_index_1 = get_global_index_node(1, k, n)
     global_index_3 = get_global_index_node(3, k, n)
     _, y1 = get_coordinates_nodes(global_index_1, l, n)
@@ -110,12 +165,15 @@ function get_y_real(ξ2, k, l=L, n=N)
     return y1 * f1(ξ2) + y3 * f2(ξ2)
 end
 
-function get_real_coordinates(ξ1, ξ2, k, l=L, n=N)
+"""
+Compute 'x, y' value in real space based on coordinates in x,y directions in frame of reference.
+"""
+function get_real_coordinates(ξ1, ξ2, k, l = L, n=N)
     return get_x_real(ξ1, k, l, n), get_y_real(ξ2, k, l, n)
 end
 
-
-function get_s_element(i, j, len=L)
+# --------------------- MATRIXES ---------------------
+function get_s_element(i, j, len = L)
     output = 0
     for l in 1:3
         for n in 1:3
@@ -123,17 +181,6 @@ function get_s_element(i, j, len=L)
         end
     end
     return output * get_a(len)^2 / 4
-end
-
-
-function get_matrix(get_matrix_element)
-    output = zeros(4, 4)
-    for i in 1:4
-        for j in 1:4
-            output[i, j] = get_matrix_element(i, j)
-        end
-    end
-    return output
 end
 
 function dev_g_ξ_1(j, x1, x2)
@@ -154,7 +201,20 @@ function get_t_element(i, j)
     return output / (2 * M)
 end
 
-function get_v_element(i, j, k, len=L)
+"""
+Create local matrix with values given by function 'get_matrix_element'.
+"""
+function get_matrix(get_matrix_element)
+    output = zeros(4, 4)
+    for i in 1:4
+        for j in 1:4
+            output[i, j] = get_matrix_element(i, j)
+        end
+    end
+    return output
+end
+
+function get_v_element(i, j, k, len = L)
     output = 0
     for l in 1:3
         for n in 1:3
@@ -162,25 +222,30 @@ function get_v_element(i, j, k, len=L)
         end
     end
     return get_a(len)^2 / 4 * M * OMEGA^2 / 2 * output
-
 end
 
-function get_global_matrix(l=L)
-    H = zeros((2 * N + 1)^2, (2 * N + 1)^2)
-    S = zeros((2 * N + 1)^2, (2 * N + 1)^2)
-    for k in 1:4*N^2
+"""
+Create global S and H matrixes. 
+"""
+function get_global_matrix(len = L, n= N)
+    H = zeros((2 * n + 1)^2, (2 * n + 1)^2)
+    S = zeros((2 * n + 1)^2, (2 * n + 1)^2)
+    for k in 1:4*n^2
         for i in 1:4
             for j in 1:4
-                global_index_1 = get_global_index_node(i, k)
-                global_index_2 = get_global_index_node(j, k)
-                H[global_index_1, global_index_2] += get_v_element(i, j, k, l) + get_t_element(i, j)
-                S[global_index_1, global_index_2] += get_s_element(i, j, l)
+                global_index_1 = get_global_index_node(i, k, n)
+                global_index_2 = get_global_index_node(j, k, n)
+                H[global_index_1, global_index_2] += get_v_element(i, j, k, len) + get_t_element(i, j)
+                S[global_index_1, global_index_2] += get_s_element(i, j, len)
             end
         end
     end
     return H, S
 end
 
+"""
+Handle edge nodes: remove rows and columns, insert diagonal values.
+"""
 function handle_removing_things(H, S, i)
     for j in 1:(2*N+1)^2
         H[i, j] = 0
@@ -192,26 +257,30 @@ function handle_removing_things(H, S, i)
     H[i, i] = -bitwaPodGrunwaldem
 end
 
-function get_edge_indexes()
+"""
+Find all global nodes' indexes that are on edge of a box. 
+"""
+function get_edge_indexes(n = N)
     output = []
     i = 1
-    while i <= 2 * N + 1
+    while i <= 2 * n + 1
         push!(output, i)
         i += 1
     end
-    while i <= (2 * N + 1)^2 - (2 * N + 1)
+    while i <= (2 * n + 1)^2 - (2 * n + 1)
         push!(output, i)
-        i += 2 * N
+        i += 2 * n
         push!(output, i)
         i += 1
     end
-    while i <= (2 * N + 1)^2
+    while i <= (2 * n + 1)^2
         push!(output, i)
         i += 1
     end
     return output
 end
 
+# --------------------- ---------------------
 function print_table(tab, n)
     println("New TABLE:")
     for i in 1:n

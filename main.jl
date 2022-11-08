@@ -4,14 +4,14 @@ using Plots
 using LinearAlgebra
 using Dates
 
-function save_elements()
+function save_elements(n = N)
     open("output/elements.csv", "w") do io
         write(io, "element,local_node,global_node,global_index,local_index,coordinates_x,coordinates_y\n")
-        for element in 1:4*N^2
+        for element in 1:4*n^2
             for local_node in 1:4
                 global_node = get_global_index_node(local_node, element)
-                global_index = get_global_index_node(local_node, element, N)
-                local_index = get_local_index_node(global_index, element, N)
+                global_index = get_global_index_node(local_node, element, n)
+                local_index = get_local_index_node(global_index, element, n)
                 x, y = get_coordinates_nodes(global_index)
                 x *= L0
                 y *= L0
@@ -22,40 +22,28 @@ function save_elements()
     end
 end
 
-function print_element(k)
-    println("element $k")
-    for local_node in 1:4
-        global_node = get_global_index_node(local_node, k)
-        println("local node: $local_node, global node: $global_node")
-        print_node(global_node, k)
-        println()
-    end
-end
-
-function print_elements()
-
-    for element_idx in 1:4*N^2
-        print_element(element_idx)
-        println()
-    end
-end
-
-function get_psi_nodes(x, y, m=M, ω=OMEGA)
-    return exp(-m * ω / 2 * (x^2 + y^2))
-end
-
-function get_psi_teo()
-    x_size = 20 * 2 * N + 1
-    y_size = 20 * 2 * N + 1
+function get_psi_teo(l = L, n = N)
+    x_size = 20 * 2 * n + 1
+    y_size = 20 * 2 * n + 1
     ψ = zeros(x_size, y_size)
     for i in 1:x_size
         for j in 1:y_size
-            ψ[i, j] = get_psi_nodes(i * 0.1 * L / (4 * N) - L / 2, j * 0.1 * L / (4 * N) - L / 2)
+            ψ[i, j] = get_psi_nodes(i * 0.1 * l / (4 * n) - l / 2, j * 0.1 * l / (4 * n) - l / 2)
         end
     end
     return ψ
 end
 
+"""
+Compute wave function values only in nodes.
+"""
+function get_psi_nodes(x, y, m=M, ω=OMEGA)
+    return exp(-m * ω / 2 * (x^2 + y^2))
+end
+
+"""
+Compute wave function values in between nodes in coordinates given in frame of reference by ξ1, ξ2.
+"""
 function get_psi(k, ψ, ξ1, ξ2)
     output = 0
     for i in 1:4
@@ -67,8 +55,11 @@ function get_psi(k, ψ, ξ1, ξ2)
     return output
 end
 
-function populate_nodes(ψ::Matrix{Float64})
-    for i in 1:(2*N+1)^2
+"""
+Fill values in ψ matrix in places corresponding to nodes.
+"""
+function populate_nodes(ψ,n = N)
+    for i in 1:(2*n+1)^2
         row, col = find_row_col_node(i)
         x, y = get_coordinates_nodes(i)
         ψ[(row-1)*20+1, (col-1)*20+1] = get_psi_nodes(x, y)
@@ -99,6 +90,12 @@ function plot_psi(ψ, label)
     savefig("output/$label")
 end
 
+function solve_eigenproblem(len = L, n = N)
+    H, S = get_global_matrix(len, n)
+    E, _ = eigen(H, S)
+    return E
+end
+
 function ex2()
     ψ = zeros(20 * 2 * N + 1, 20 * 2 * N + 1)
     populate_nodes(ψ)
@@ -110,12 +107,52 @@ function ex2()
     plot_psi(get_psi_teo(), "psi_teo")
 end
 
-function solve_eigenproblem(l=L)
-    println("current l: $l")
-    H, S = get_global_matrix(l)
-    E, _ = eigen(H, S)
-    return E
+function ex4a()
+    elements = [6, 7, 10, 11]
+    for element in elements
+        for i in 1:4
+            x, y = get_coordinates_nodes(get_global_index_node(i, element))
+            value = get_v_element(i, i, 7) / get_s_element(i, i) * R
+            println("Element: $element, coordinates: $(x*L0), $(y*L0):\t $value")
+        end
+        println("")
+    end
 end
+
+function ex5(n)
+    # H, S = get_global_matrix(len ,n)
+    # # print_table(S, (2 * n + 1)^2)
+    # # save_matrix_to_file(S, (2 * n + 1)^2, "S_initial")
+    # # save_matrix_to_file(H, (2 * n + 1)^2, "H_initial")
+    # edges = get_edge_indexes(n)
+    # for edge in edges
+    #     handle_removing_things(H, S, edge)
+    # end
+    # # print_table(S, (2 * N + 1)^2)
+    # # save_matrix_to_file(S, (2 * N + 1)^2, "S_final")
+    # # save_matrix_to_file(H, (2 * N + 1)^2, "H_final")
+    # E, c = eigen(H, S)
+
+
+    plot()
+    L_num = 20
+    L_start = 20
+    L_end = 200
+    L_step = (L_end - L_start) / L_num
+    E = zeros(10, L_num + 1)
+    L_arr = L_start:L_step:L_end
+    for (index, l) in enumerate(L_arr)
+        l_nm = l/L0
+        for j in 1:10
+            E[j, index] = solve_eigenproblem(l_nm, n)[j]
+        end
+    end
+    for i in 1:10
+        plot!(L_arr, E[i, :], label="E$i")
+    end
+    savefig("output/eigenvalues_$n.png")
+end
+
 
 function main()
     # if output doesnt exist, create it
@@ -125,61 +162,17 @@ function main()
     # print_elements()
     # save_elements()
 
-    # ex2()
+    #ex2()
 
-    # # ex3
+    # ex3
     # println(get_matrix(get_s_element))
 
-    # # ex4
+    # ex4
     # println(get_matrix(get_t_element))
-    H, S = get_global_matrix()
-    # print_table(S, (2 * N + 1)^2)
-    # save_matrix_to_file(S, (2 * N + 1)^2, "S_initial")
-    # save_matrix_to_file(H, (2 * N + 1)^2, "H_initial")
 
+    #ex4a()
 
-    edges = get_edge_indexes()
-
-    for edge in edges
-        handle_removing_things(H, S, edge)
-    end
-
-    # print_table(S, (2 * N + 1)^2)
-    # save_matrix_to_file(S, (2 * N + 1)^2, "S_final")
-    # save_matrix_to_file(H, (2 * N + 1)^2, "H_final")
-
-    # write S to a file
-
-    # E, c = eigen(H, S)
-    # println(E)
-
-    matrix = zeros(4)
-
-    for i in 1:4
-        matrix[i] = get_v_element(i, i, 7) / get_s_element(i, i)
-    end
-    plot()
-    # println(matrix * R)
-    L_num = 20
-    L_start = 20
-    L_end = 200
-    L_step = (L_end - L_start) / L_num
-    E = zeros(10, L_num + 1)
-    L_arr = L_start:L_step:L_end
-    for (index, l) in enumerate(L_arr)
-        for j in 1:10
-            E[j, index] = solve_eigenproblem(l)[j]
-        end
-    end
-    for i in 1:10
-        plot!(L_arr, E[i, :], label="E$i")
-        println(E[i, :])
-    end
-    println(E)
-
-    savefig("output/eigenvalues.png")
-
-
+    ex5(2)
 
 end
 
