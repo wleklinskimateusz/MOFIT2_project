@@ -111,18 +111,18 @@ function get_y_real(ξ2, k, l=L, n=N)
 end
 
 function get_real_coordinates(ξ1, ξ2, k, l=L, n=N)
-    return get_x_real(ξ1, k, n), get_y_real(ξ2, k, l, n)
+    return get_x_real(ξ1, k, l, n), get_y_real(ξ2, k, l, n)
 end
 
 
-function get_s_element(i, j, l=L)
+function get_s_element(i, j, len=L)
     output = 0
     for l in 1:3
         for n in 1:3
             output += w[l] * w[n] * g(j, p[l], p[n]) * g(i, p[l], p[n])
         end
     end
-    return output * get_a(l)^2 / 4
+    return output * get_a(len)^2 / 4
 end
 
 
