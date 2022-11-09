@@ -1,3 +1,5 @@
+using Printf
+
 function get_length_atomic(l)
     return l / L0
 end
@@ -282,13 +284,15 @@ end
 
 # --------------------- ---------------------
 function print_table(tab, n)
-    println("New TABLE:")
+    println()
     for i in 1:n
         for j in 1:n
-            print(tab[i, j], "\t")
+            #  print(tab[i, j], "\t")
+            @printf("%.1f\t", tab[i,j])
         end
         println()
     end
+    println()
 end
 
 function save_matrix_to_file(A, size, filename)

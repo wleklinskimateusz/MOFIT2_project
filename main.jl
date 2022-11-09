@@ -109,11 +109,13 @@ end
 
 function ex4a()
     elements = [6, 7, 10, 11]
+    println()
     for element in elements
+        println("Element: $element")
         for i in 1:4
             x, y = get_coordinates_nodes(get_global_index_node(i, element))
             value = get_v_element(i, i, 7) / get_s_element(i, i) * R
-            println("Element: $element, coordinates: $(x*L0), $(y*L0):\t $value")
+            println("$(x*L0), $(y*L0):\t $value")
         end
         println("")
     end
@@ -165,14 +167,18 @@ function main()
     #ex2()
 
     # ex3
-    # println(get_matrix(get_s_element))
+    # println("Lokalna macierz S.")
+    # print_table(get_matrix(get_s_element),4)
+    # print_table(get_matrix(get_s_element)/get_a(L)^2*36,4)
 
     # ex4
-    # println(get_matrix(get_t_element))
+    # println("Lokalna macierz t.")
+    # print_table(get_matrix(get_t_element),4)
+    # print_table(get_matrix(get_t_element)*6*2*M,4)
 
-    #ex4a()
+    # ex4a()
 
-    ex5(2)
+    # ex5(2)
 
 end
 
