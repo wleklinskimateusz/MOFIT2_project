@@ -4,7 +4,7 @@ using Plots
 using LinearAlgebra
 using Dates
 
-function save_elements(n = N)
+function save_elements(n::Int16=N)::Nothing
     open("output/elements.csv", "w") do io
         write(io, "element,local_node,global_node,global_index,local_index,coordinates_x,coordinates_y\n")
         for element in 1:4*n^2
@@ -22,7 +22,7 @@ function save_elements(n = N)
     end
 end
 
-function get_psi_teo(l = L, n = N)
+function get_psi_teo(l::Float64=L, n::Int16=N)::Matrix{Float64}
     x_size = 20 * 2 * n + 1
     y_size = 20 * 2 * n + 1
     ψ = zeros(x_size, y_size)
@@ -34,20 +34,16 @@ function get_psi_teo(l = L, n = N)
     return ψ
 end
 
-"""
-Compute wave function values only in nodes.
-"""
-function get_psi_nodes(x, y, m=M, ω=OMEGA)
+"Compute wave function values only in nodes."
+function get_psi_nodes(x::Float64, y::Float64, m::Float64=M, ω::Float64=OMEGA)::Float64
     return exp(-m * ω / 2 * (x^2 + y^2))
 end
 
-"""
-Compute wave function values in between nodes in coordinates given in frame of reference by ξ1, ξ2.
-"""
-function get_psi(k, ψ, ξ1, ξ2)
-    output = 0
+"Compute wave function values in between nodes in coordinates given in frame of reference by ξ1, ξ2."
+function get_psi(k::Int64, ψ::Matrix{Float64}, ξ1::Float64, ξ2::Float64)::Float64
+    output::Float64 = 0
     for i in 1:4
-        idx = get_global_index_node(i, k)
+        idx::Int64 = get_global_index_node(i, k)
         row, col = find_row_col_node(idx)
         local_ψ = ψ[(row-1)*20+1, (col-1)*20+1]
         output += local_ψ * g(i, ξ1, ξ2)
@@ -55,10 +51,8 @@ function get_psi(k, ψ, ξ1, ξ2)
     return output
 end
 
-"""
-Fill values in ψ matrix in places corresponding to nodes.
-"""
-function populate_nodes(ψ,n = N)
+"Fill values in ψ matrix in places corresponding to nodes."
+function populate_nodes(ψ::Matrix{Float64}, n::Int16=N)
     for i in 1:(2*n+1)^2
         row, col = find_row_col_node(i)
         x, y = get_coordinates_nodes(i)
@@ -67,7 +61,7 @@ function populate_nodes(ψ,n = N)
 end
 
 
-function calculate_psi_element(element, ψ)
+function calculate_psi_element(element::Int64, ψ::Matrix{Float64})::Nothing
     ξ1 = -1:0.1:1
     ξ2 = -1:0.1:1
     idx = get_global_index_node(1, element)
@@ -83,20 +77,20 @@ function calculate_psi_element(element, ψ)
     end
 end
 
-function plot_psi(ψ, label)
+function plot_psi(ψ::Matrix{Float64}, label::String)::Nothing
     x = -L/2:0.1*L/(4*N):L/2
     y = -L/2:0.1*L/(4*N):L/2
     heatmap(x, y, ψ, aspect_ratio=:equal, color=:viridis)
     savefig("output/$label")
 end
 
-function solve_eigenproblem(len = L, n = N)
+function solve_eigenproblem(len::Float64=L, n::Int16=N)::Vector{Float64}
     H, S = get_global_matrix(len, n)
     E, _ = eigen(H, S)
     return E
 end
 
-function ex2()
+function ex2()::Nothing
     ψ = zeros(20 * 2 * N + 1, 20 * 2 * N + 1)
     populate_nodes(ψ)
 
@@ -107,7 +101,7 @@ function ex2()
     plot_psi(get_psi_teo(), "psi_teo")
 end
 
-function ex4a()
+function ex4a()::Nothing
     elements = [6, 7, 10, 11]
     println()
     for element in elements
@@ -121,7 +115,7 @@ function ex4a()
     end
 end
 
-function ex5(n)
+function ex5(n::Int16)::Nothing
     # H, S = get_global_matrix(len ,n)
     # # print_table(S, (2 * n + 1)^2)
     # # save_matrix_to_file(S, (2 * n + 1)^2, "S_initial")
@@ -142,9 +136,9 @@ function ex5(n)
     L_end = 200
     L_step = (L_end - L_start) / L_num
     E = zeros(10, L_num + 1)
-    L_arr = L_start:L_step:L_end
-    for (index, l) in enumerate(L_arr)
-        l_nm = l/L0
+    L_arr::Vector{Float64} = L_start:L_step:L_end
+    for (index::Int64, l::Float64) in enumerate(L_arr)
+        l_nm = l / L0
         for j in 1:10
             E[j, index] = solve_eigenproblem(l_nm, n)[j]
         end
@@ -161,24 +155,25 @@ function main()
     if !isdir("output")
         mkdir("output")
     end
-    # print_elements()
-    # save_elements()
+    @time print_elements()
+    save_elements()
 
-    #ex2()
+    @time ex2()
 
     # ex3
-    # println("Lokalna macierz S.")
-    # print_table(get_matrix(get_s_element),4)
-    # print_table(get_matrix(get_s_element)/get_a(L)^2*36,4)
+    size::Int16 = 4
+    println("Lokalna macierz S.")
+    print_table(get_matrix(get_s_element), size)
+    print_table(get_matrix(get_s_element) / get_a(L)^2 * 36, size)
 
     # ex4
-    # println("Lokalna macierz t.")
-    # print_table(get_matrix(get_t_element),4)
-    # print_table(get_matrix(get_t_element)*6*2*M,4)
+    println("Lokalna macierz t.")
+    print_table(get_matrix(get_t_element), size)
+    print_table(get_matrix(get_t_element) * 6 * 2 * M, size)
 
-    # ex4a()
+    @time ex4a()
 
-    # ex5(2)
+    @time ex5(Int16(2))
 
 end
 
