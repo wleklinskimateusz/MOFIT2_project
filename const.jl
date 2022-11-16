@@ -1,6 +1,4 @@
-const N::Int16 = 10
 const L0::Float64 = 0.052917721 #nm
-const L::Float64 = 100 / L0
 const M::Float64 = 0.067 # m_e
 const R::Float64 = 27211.6
 const OMEGA::Float64 = 10 / 27211.6
