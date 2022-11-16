@@ -1,5 +1,7 @@
 include("const.jl")
 include("utils.jl")
+include("matrix.jl")
+include("net.jl")
 using Plots
 using LinearAlgebra
 using Dates
@@ -35,7 +37,7 @@ function get_psi_teo(l::Float64, n::Int16)::Matrix{Float64}
 end
 
 "Compute wave function values only in nodes."
-function get_psi_nodes(i::Int64, m::Float64=M, ω::Float64=OMEGA)::Float64
+function get_psi_nodes(i::Int64, n::Int16, l::Float64, m::Float64=M, ω::Float64=OMEGA)::Float64
     x, y = get_coordinates_nodes(i, l, n)
     return exp(-m * ω / 2 * (x^2 + y^2))
 end
@@ -58,10 +60,10 @@ function get_psi(k::Int64, ψ::Matrix{Float64}, ξ1::Float64, ξ2::Float64, n::I
 end
 
 "Fill values in ψ matrix in places corresponding to nodes."
-function populate_nodes(ψ::Matrix{Float64}, populate_node::Function, n::Int16)
+function populate_nodes(ψ::Matrix{Float64}, populate_node::Function, n::Int16, l::Float64)
     for i in 1:(2*n+1)^2
         row, col = find_row_col_node(i, n)
-        ψ[(row-1)*20+1, (col-1)*20+1] = populate_node(i)
+        ψ[(row-1)*20+1, (col-1)*20+1] = populate_node(i, n, l)
     end
 end
 
@@ -96,10 +98,10 @@ function solve_eigenproblem(len::Float64, n::Int16, states::Int64)::Tuple{Vector
 end
 
 function ex2()::Nothing
-    n = 2
-    l = 100 / L0
-    ψ = zeros(20 * 2 * n + 1, 20 * 2 * n + 1)
-    populate_nodes(ψ, get_psi_nodes, n)
+    n::Int16 = 2
+    l::Float64 = 100 / L0
+    ψ::Matrix{Float64} = zeros(20 * 2 * n + 1, 20 * 2 * n + 1)
+    populate_nodes(ψ, get_psi_nodes, n, l)
 
     for element in 1:4*n^2
         calculate_psi_element(element, ψ, n)
@@ -109,6 +111,8 @@ function ex2()::Nothing
 end
 
 function ex4a()::Nothing
+    n::Int16 = 2
+    l::Float64 = 100 / L0
     elements = [6, 7, 10, 11]
     println()
     for element in elements
@@ -153,7 +157,7 @@ function ex6(l::Float64, n::Int16)::Nothing
     E, c = solve_eigenproblem(l, n, 6)
     ψ = zeros(20 * 2 * n + 1, 20 * 2 * n + 1)
     for state in 1:6
-        populate_nodes(ψ, (i) -> c[state, i], n)
+        populate_nodes(ψ, (i, n, l) -> c[state, i], n, l)
         for element in 1:4*n^2
             calculate_psi_element(element, ψ, n)
         end
@@ -167,25 +171,27 @@ function main()
     if !isdir("output")
         mkdir("output")
     end
-    # @time print_elements()
-    # save_elements()
+    n::Int16 = 2
+    l::Float64 = 100 / L0
+    @time print_elements(n, l)
+    save_elements(n, l)
 
-    # @time ex2()
+    @time ex2()
 
-    # # ex3
-    # size::Int16 = 4
-    # println("Lokalna macierz S.")
-    # print_table(get_matrix(get_s_element), size)
-    # print_table(get_matrix(get_s_element) / get_a(l)^2 * 36, size)
+    # ex3
+    size::Int16 = 4
+    println("Lokalna macierz S.")
+    print_table(get_matrix((i, j) -> get_s_element(i, j, l, n)), size)
+    print_table(get_matrix((i, j) -> get_s_element(i, j, l, n)) / get_a(l, n)^2 * 36, size)
 
-    # # ex4
-    # println("Lokalna macierz t.")
-    # print_table(get_matrix(get_t_element), size)
-    # print_table(get_matrix(get_t_element) * 6 * 2 * M, size)
+    # ex4
+    println("Lokalna macierz t.")
+    print_table(get_matrix(get_t_element), size)
+    print_table(get_matrix(get_t_element) * 6 * 2 * M, size)
 
-    # @time ex4a()
+    @time ex4a()
 
-    # @time ex5(Int16(2))
+    @time ex5(Int16(2))
 
     @time ex6(100.0, Int16(10))
 
