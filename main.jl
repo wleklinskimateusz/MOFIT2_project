@@ -79,40 +79,49 @@ function ex5(n::Int16)::Nothing
     return nothing
 end
 
-function ex6(l::Float64, n::Int16)::Matrix{Float64}
+function ex6(l::Float64, n::Int16)::Tuple{Vector{Float64},Matrix{Float64}}
     E, c = solve_eigenproblem(l, n, 6)
-    ψ = zeros(20 * 2 * n + 1, 20 * 2 * n + 1)
-    for state in 1:6
-        populate_nodes(ψ, (i, n, l) -> c[state, i], n, l)
-        for element in 1:4*n^2
-            calculate_psi_element(element, ψ, n)
-        end
-        plot_psi(ψ, "psi_$state", n, l)
-    end
-    return c
+    # ψ = zeros(20 * 2 * n + 1, 20 * 2 * n + 1)
+    # for state in 1:6
+    #     populate_nodes(ψ, (i, n, l) -> c[state, i], n, l)
+    #     for element in 1:4*n^2
+    #         calculate_psi_element(element, ψ, n)
+    #     end
+    #     plot_psi(ψ, "psi_$state", n, l)
+    # end
+    return E, c
 end
 
 function get_normalised_c(c::Vector{Float64}, S::Matrix{Float64})::Vector{Float64}
     return c ./ sqrt(c' * S * c)
 end
 
+function get_x_analytical(E1::Float64, E2::Float64, tmax::Int64, A::Float64 = 1)::Vector{Float64}
+    T = 2*π/ (E2 - E1)
+    t = 1:tmax
+    return A*cos.(T*t)
+end
 
-
-function ex7(c::Matrix{Float64}, l::Float64, n::Int16, tmax::Int64=100)::Nothing
+function ex7(E::Vector{Float64},c::Matrix{Float64}, l::Float64, n::Int16, tmax::Int64=100)::Nothing
     H, S = get_global_matrix(l, n)
     X = get_global_x_matrix(l, n)
+
     c1::Vector{Float64} = get_normalised_c(c[1, :], S)
     c2::Vector{Float64} = get_normalised_c(c[2, :], S)
-    x::Vector{Float64} = zeros(tmax)
-
     d::Vector{ComplexF64} = c1 + c2
+
+    E1, E2 = E[1:2]
+    x_theo = get_x_analytical(E1, E2, tmax, 0.6)
+    x::Vector{Float64} = zeros(tmax)
+    
     times = 1:Δt:(tmax*Δt)
     for t in 1:tmax
         d = inv(get_matrix_left(H, S, n)) * get_matrix_right(H, S, n) * d
         # hermitian transpose
         x[t] = real(d' * X * d)
     end
-    plot(times, x, label="x")
+    plot(times, x_theo, label = "x_theo")
+    plot!(times, x, label="x")
     xlabel!("t")
     ylabel!("x")
     savefig("output/x.png")
@@ -148,11 +157,8 @@ function main()
 
     # @time ex5(Int16(2))
 
-    c = @time ex6(100.0, Int16(10))
-    @time ex7(c, 100.0, Int16(10))
-
-
-
+    E, c = @time ex6(100.0, Int16(10))
+    @time ex7(E, c, 100.0, Int16(10))
 
 end
 
