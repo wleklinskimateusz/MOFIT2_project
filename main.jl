@@ -26,8 +26,7 @@ function save_elements(n::Int16, l::Float64)::Nothing
 end
 
 
-function ex2()::Nothing
-    n::Int16 = 2
+function ex2(n::Int16)::Matrix{Float64}
     l::Float64 = 100 / L0
     ψ::Matrix{Float64} = zeros(20 * 2 * n + 1, 20 * 2 * n + 1)
     populate_nodes(ψ, get_psi_nodes, n, l)
@@ -37,7 +36,7 @@ function ex2()::Nothing
     end
     plot_psi(ψ, "psi", n, l)
     plot_psi(get_psi_teo(l, n), "psi_teo", n, l)
-    return nothing
+    return ψ
 end
 
 function ex4a()::Nothing
@@ -57,20 +56,19 @@ function ex4a()::Nothing
 end
 
 function ex5(n::Int16)::Nothing
+    states = 7
     plot()
     L_num = 20
     L_start = 20
     L_end = 200
     L_step = (L_end - L_start) / L_num
-    E = zeros(10, L_num + 1)
+    E = zeros(states, L_num + 1)
     L_arr::Vector{Float64} = L_start:L_step:L_end
     L_arr ./= L0
     for (index::Int64, l::Float64) in enumerate(L_arr)
-        E[:, index], _ = solve_eigenproblem(l, n, 10)
+        E[:, index], _ = solve_eigenproblem(l, n, states)
     end
-    # println(E[1, :])
-    # println(L_arr * L0)
-    for i in 1:10 # loop through eigenstates
+    for i in 1:states # loop through eigenstates
         plot!(L_arr * L0, E[i, :] * R, label="E$i")
     end
     xlabel!("L [nm]")
@@ -81,14 +79,14 @@ end
 
 function ex6(l::Float64, n::Int16)::Tuple{Vector{Float64},Matrix{Float64}}
     E, c = solve_eigenproblem(l, n, 6)
-    # ψ = zeros(20 * 2 * n + 1, 20 * 2 * n + 1)
-    # for state in 1:6
-    #     populate_nodes(ψ, (i, n, l) -> c[state, i], n, l)
-    #     for element in 1:4*n^2
-    #         calculate_psi_element(element, ψ, n)
-    #     end
-    #     plot_psi(ψ, "psi_$state", n, l)
-    # end
+    ψ = zeros(20 * 2 * n + 1, 20 * 2 * n + 1)
+    for state in 1:6
+        populate_nodes(ψ, (i, n, l) -> c[state, i], n, l)
+        for element in 1:4*n^2
+            calculate_psi_element(element, ψ, n)
+        end
+        plot_psi(ψ, "psi_$state", n, l)
+    end
     return E, c
 end
 
@@ -96,7 +94,7 @@ function get_normalised_c(c::Vector{Float64}, S::Matrix{Float64})::Vector{Float6
     return c ./ sqrt(c' * S * c)
 end
 
-function get_x_analytical(E1::Float64, E2::Float64, tmax::Int64, A::Float64=1)::Vector{Float64}
+function get_x_analytical(E1::Float64, E2::Float64, tmax::Int64, A::Float64=1.0)::Vector{Float64}
     T = 2 * π / (E2 - E1)
     t = 1:tmax
     return A * cos.(T * t)
@@ -113,13 +111,25 @@ function ex7(E::Vector{Float64}, c::Matrix{Float64}, l::Float64, n::Int16, tmax:
     E1, E2 = E[1:2]
     x_theo = get_x_analytical(E1, E2, tmax, 0.6)
     x::Vector{Float64} = zeros(tmax)
+    ψ = zeros(20 * 2 * n + 1, 20 * 2 * n + 1)
+    anim::Animation = Animation()
 
     times = 1:Δt:(tmax*Δt)
     for t in 1:tmax
         d = inv(get_matrix_left(H, S, n)) * get_matrix_right(H, S, n) * d
         # hermitian transpose
         x[t] = real(d' * X * d)
+        d_abs2 = real(d' .* d)
+        populate_nodes(ψ, (i, n, l) -> d_abs2[i], n, l)
+        for element in 1:4*n^2
+            calculate_psi_element(element, ψ, n)
+        end
+        h = plot_psi(ψ, "t=$t", n, l, false)
+        frame(anim, h)
     end
+    gif(anim, "output/psi.gif", fps=1 / Δt)
+
+    # println(d)
     plot(times, x_theo, label="x_theo")
     plot!(times, x, label="x")
     xlabel!("t")
@@ -135,30 +145,30 @@ function main()
     if !isdir("output")
         mkdir("output")
     end
-    # n::Int16 = 2
-    # l::Float64 = 100 / L0
-    # @time print_elements(n, l)
-    # save_elements(n, l)
+    n::Int16 = 2
+    l::Float64 = 60 / L0
+    @time print_elements(n, l)
+    save_elements(n, l)
 
-    # @time ex2()
+    @time ex2(n)
 
-    # # ex3
+    # ex3
     # size::Int16 = 4
     # println("Lokalna macierz S.")
     # print_table(get_matrix((i, j) -> get_s_element(i, j, l, n)), size)
     # print_table(get_matrix((i, j) -> get_s_element(i, j, l, n)) / get_a(l, n)^2 * 36, size)
 
-    # # ex4
+    # ex4
     # println("Lokalna macierz t.")
     # print_table(get_matrix(get_t_element), size)
     # print_table(get_matrix(get_t_element) * 6 * 2 * M, size)
 
-    # @time ex4a()
+    @time ex4a()
 
-    # @time ex5(Int16(2))
+    @time ex5(n)
 
-    E, c = @time ex6(100.0, Int16(10))
-    @time ex7(E, c, 100.0, Int16(10))
+    E, c = @time ex6(100.0, n)
+    @time ex7(E, c, 100.0, n)
 
 end
 

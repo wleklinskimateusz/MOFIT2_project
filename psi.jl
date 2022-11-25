@@ -61,12 +61,14 @@ function calculate_psi_element(element::Int64, ψ::Matrix{Float64}, n::Int16)::N
     end
 end
 
-function plot_psi(ψ::Matrix{Float64}, label::String, n::Int16, l::Float64)::Nothing
+function plot_psi(ψ::Matrix{Float64}, label::String, n::Int16, l::Float64, save::Bool=true)::Plots.Plot{Plots.GRBackend}
     x = -l/2:0.1*l/(4*n):l/2
     y = -l/2:0.1*l/(4*n):l/2
-    heatmap(x, y, ψ, aspect_ratio=:equal, color=:viridis)
-    savefig("output/$label")
-    return nothing
+    h = heatmap(x, y, ψ, aspect_ratio=:equal, color=:viridis)
+    if save
+        savefig("output/$label")
+    end
+    return h
 end
 
 function solve_eigenproblem(len::Float64, n::Int16, states::Int64)::Tuple{Vector{Float64},Matrix{Float64}}
@@ -76,6 +78,6 @@ function solve_eigenproblem(len::Float64, n::Int16, states::Int64)::Tuple{Vector
     while E[i] < 0
         i += 1
     end
-    return E[i:i+states], c[i:i+states, :]
+    return E[i:i+states-1], c[i:i+states-1, :]
 end
 

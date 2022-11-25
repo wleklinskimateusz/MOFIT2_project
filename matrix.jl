@@ -121,7 +121,7 @@ function get_matrix_left(H::Matrix{Float64}, S::Matrix{Float64}, n::Int16)::Matr
     output::Matrix{ComplexF64} = zeros((2 * n + 1)^2, (2 * n + 1)^2)
     for i in 1:(2*n+1)^2
         for j in 1:(2*n+1)^2
-            output[i, j] = H[i, j] - Δt / (2 * im) * S[i, j]
+            output[i, j] = S[i, j] - Δt / (2 * im) * H[i, j]
         end
     end
     return output
@@ -131,7 +131,7 @@ function get_matrix_right(H::Matrix{Float64}, S::Matrix{Float64}, n::Int16)::Mat
     output::Matrix{ComplexF64} = zeros((2 * n + 1)^2, (2 * n + 1)^2)
     for i in 1:(2*n+1)^2
         for j in 1:(2*n+1)^2
-            output[i, j] = H[i, j] + Δt / (2 * im) * S[i, j]
+            output[i, j] = S[i, j] + Δt / (2 * im) * H[i, j]
         end
     end
     return output
