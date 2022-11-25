@@ -96,13 +96,13 @@ function get_normalised_c(c::Vector{Float64}, S::Matrix{Float64})::Vector{Float6
     return c ./ sqrt(c' * S * c)
 end
 
-function get_x_analytical(E1::Float64, E2::Float64, tmax::Int64, A::Float64 = 1)::Vector{Float64}
-    T = 2*π/ (E2 - E1)
+function get_x_analytical(E1::Float64, E2::Float64, tmax::Int64, A::Float64=1)::Vector{Float64}
+    T = 2 * π / (E2 - E1)
     t = 1:tmax
-    return A*cos.(T*t)
+    return A * cos.(T * t)
 end
 
-function ex7(E::Vector{Float64},c::Matrix{Float64}, l::Float64, n::Int16, tmax::Int64=100)::Nothing
+function ex7(E::Vector{Float64}, c::Matrix{Float64}, l::Float64, n::Int16, tmax::Int64=100)::Nothing
     H, S = get_global_matrix(l, n)
     X = get_global_x_matrix(l, n)
 
@@ -113,14 +113,14 @@ function ex7(E::Vector{Float64},c::Matrix{Float64}, l::Float64, n::Int16, tmax::
     E1, E2 = E[1:2]
     x_theo = get_x_analytical(E1, E2, tmax, 0.6)
     x::Vector{Float64} = zeros(tmax)
-    
+
     times = 1:Δt:(tmax*Δt)
     for t in 1:tmax
         d = inv(get_matrix_left(H, S, n)) * get_matrix_right(H, S, n) * d
         # hermitian transpose
         x[t] = real(d' * X * d)
     end
-    plot(times, x_theo, label = "x_theo")
+    plot(times, x_theo, label="x_theo")
     plot!(times, x, label="x")
     xlabel!("t")
     ylabel!("x")
