@@ -50,8 +50,8 @@ function calculate_psi_element(element::Int64, ψ::Matrix{Float64}, n::Int16)::N
     ξ2 = -1:0.1:1
     idx = get_global_index_node(1, element, n)
     row, col = find_row_col_node(idx, n)
-    for i in 1:20
-        for j in 1:20
+    for i in 1:21
+        for j in 1:21
             if i == 1 && j == 1
                 continue
             end
@@ -64,7 +64,7 @@ end
 function plot_psi(ψ::Matrix{Float64}, label::String, n::Int16, l::Float64, save::Bool=true)::Plots.Plot{Plots.GRBackend}
     x = -l/2:0.1*l/(4*n):l/2
     y = -l/2:0.1*l/(4*n):l/2
-    h = heatmap(x, y, ψ, aspect_ratio=:equal, color=:viridis)
+    h = heatmap(x, y, ψ, aspect_ratio=:equal, color=:viridis, title="$label")
     if save
         savefig("output/$label")
     end

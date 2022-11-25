@@ -79,14 +79,14 @@ end
 
 function ex6(l::Float64, n::Int16)::Tuple{Vector{Float64},Matrix{Float64}}
     E, c = solve_eigenproblem(l, n, 6)
-    ψ = zeros(20 * 2 * n + 1, 20 * 2 * n + 1)
-    for state in 1:6
-        populate_nodes(ψ, (i, n, l) -> c[state, i], n, l)
-        for element in 1:4*n^2
-            calculate_psi_element(element, ψ, n)
-        end
-        plot_psi(ψ, "psi_$state", n, l)
-    end
+    # ψ = zeros(20 * 2 * n + 1, 20 * 2 * n + 1)
+    # for state in 1:6
+    #     populate_nodes(ψ, (i, n, l) -> c[state, i], n, l)
+    #     for element in 1:4*n^2
+    #         calculate_psi_element(element, ψ, n)
+    #     end
+    #     plot_psi(ψ, "psi_$state", n, l)
+    # end
     return E, c
 end
 
@@ -96,7 +96,7 @@ end
 
 function get_x_analytical(E1::Float64, E2::Float64, tmax::Int64, A::Float64=1.0)::Vector{Float64}
     T = 2 * π / (E2 - E1)
-    t = 1:tmax
+    t = 1:Δt:(tmax*Δt)
     return A * cos.(T * t)
 end
 
@@ -127,9 +127,8 @@ function ex7(E::Vector{Float64}, c::Matrix{Float64}, l::Float64, n::Int16, tmax:
         h = plot_psi(ψ, "t=$t", n, l, false)
         frame(anim, h)
     end
-    gif(anim, "output/psi.gif", fps=1 / Δt)
+    gif(anim, "output/psi.gif")
 
-    # println(d)
     plot(times, x_theo, label="x_theo")
     plot!(times, x, label="x")
     xlabel!("t")
@@ -147,10 +146,10 @@ function main()
     end
     n::Int16 = 2
     l::Float64 = 60 / L0
-    @time print_elements(n, l)
-    save_elements(n, l)
+    # @time print_elements(n, l)
+    # save_elements(n, l)
 
-    @time ex2(n)
+    # @time ex2(n)
 
     # ex3
     # size::Int16 = 4
@@ -163,9 +162,9 @@ function main()
     # print_table(get_matrix(get_t_element), size)
     # print_table(get_matrix(get_t_element) * 6 * 2 * M, size)
 
-    @time ex4a()
+    # @time ex4a()
 
-    @time ex5(n)
+    # @time ex5(n)
 
     E, c = @time ex6(100.0, n)
     @time ex7(E, c, 100.0, n)
