@@ -73,11 +73,17 @@ end
 
 function solve_eigenproblem(len::Float64, n::Int16, states::Int64)::Tuple{Vector{Float64},Matrix{Float64}}
     H, S = get_global_matrix(len, n)
+    Hsize::Int16 = (2 * n + 1)^2
+    # print table H and s
+    save_matrix_to_file(H, Hsize, "H.txt")
+    save_matrix_to_file(S, Hsize, "S.txt")
     E, c = eigen(H, S)
+    # save eigenvalues to file
+    println(size(c))
     i = 1
     while E[i] < 0
         i += 1
     end
-    return E[i:i+states-1], c[i:i+states-1, :]
+    return E[i:i+states-1], c[:, i:i+states-1]
 end
 

@@ -82,9 +82,9 @@ function ex6(l::Float64, n::Int16)::Tuple{Vector{Float64},Matrix{Float64}}
     ψ = zeros(20 * 2 * n + 1, 20 * 2 * n + 1)
     for state in 1:6
         populate_nodes(ψ, (i, n, l) -> c[state, i], n, l)
-        # for element in 1:4*n^2
-        #     calculate_psi_element(element, ψ, n)
-        # end
+        for element in 1:4*n^2
+            calculate_psi_element(element, ψ, n)
+        end
         plot_psi(ψ, "psi_$state", n, l)
     end
     return E, c
@@ -147,10 +147,10 @@ function main()
     end
     n::Int16 = 2
     l::Float64 = 80 / L0
-    @time print_elements(n, l)
-    save_elements(n, l)
+    # @time print_elements(n, l)
+    # save_elements(n, l)
 
-    @time ex2(n)
+    # @time ex2(n)
 
     # ex3
     # size::Int16 = 4
@@ -169,6 +169,7 @@ function main()
 
     # n = 10
     E, c = @time ex6(100.0, n)
+    # solve_eigenproblem(l, n, 6)
     # @time ex7(E, c, 100.0, n)
 
 end

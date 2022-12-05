@@ -137,7 +137,7 @@ function get_matrix_right(H::Matrix{Float64}, S::Matrix{Float64}, n::Int16)::Mat
     return output
 end
 
-function save_matrix_to_file(A::Matrix{Float64}, size::Float16, filename::String)::Nothing
+function save_matrix_to_file(A::Matrix{Float64}, size::Int16, filename::String)::Nothing
     open("output/$filename", "w") do io
         for i in 1:size
             for j in 1:size
