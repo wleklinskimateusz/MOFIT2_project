@@ -56,16 +56,17 @@ function ex4a()::Nothing
 end
 
 function ex5(n::Int16)::Nothing
-    states = 7
+    states = 8
     plot()
     L_num = 20
     L_start = 20
-    L_end = 200
+    L_end = 180
     L_step = (L_end - L_start) / L_num
     E = zeros(states, L_num + 1)
     L_arr::Vector{Float64} = L_start:L_step:L_end
     L_arr ./= L0
     for (index::Int64, l::Float64) in enumerate(L_arr)
+        println(l * L0)
         E[:, index], _ = solve_eigenproblem(l, n, states)
     end
     for i in 1:states # loop through eigenstates
@@ -81,7 +82,7 @@ function ex6(l::Float64, n::Int16)::Tuple{Vector{Float64},Matrix{Float64}}
     E, c = solve_eigenproblem(l, n, 6)
     ψ = zeros(20 * 2 * n + 1, 20 * 2 * n + 1)
     for state in 1:6
-        populate_nodes(ψ, (i, n, l) -> c[state, i], n, l)
+        populate_nodes(ψ, (i, n, l) -> c[i, state], n, l)
         for element in 1:4*n^2
             calculate_psi_element(element, ψ, n)
         end
@@ -145,8 +146,8 @@ function main()
     if !isdir("output")
         mkdir("output")
     end
-    n::Int16 = 2
-    l::Float64 = 80 / L0
+    n::Int16 = 10
+    l::Float64 = 100 / L0
     # @time print_elements(n, l)
     # save_elements(n, l)
 
@@ -165,10 +166,15 @@ function main()
 
     # @time ex4a()
 
+    n = 2
+    @time ex5(n)
+    # n = 5
+    # @time ex5(n)
+    # n = 10
     # @time ex5(n)
 
     # n = 10
-    E, c = @time ex6(100.0, n)
+    #E, c = @time ex6(l, n)
     # solve_eigenproblem(l, n, 6)
     # @time ex7(E, c, 100.0, n)
 
