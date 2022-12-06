@@ -66,7 +66,6 @@ function ex5(n::Int16)::Nothing
     L_arr::Vector{Float64} = L_start:L_step:L_end
     L_arr ./= L0
     for (index::Int64, l::Float64) in enumerate(L_arr)
-        println(l * L0)
         E[:, index], _ = solve_eigenproblem(l, n, states)
     end
     for i in 1:states # loop through eigenstates
@@ -91,14 +90,13 @@ function ex6(l::Float64, n::Int16)
     return E, c
 end
 
-function get_x_analytical(E1::Float64, E2::Float64, tmax::Int64, A::Float64=1.0)::Vector{Float64}
+function get_x_analytical(E1::Float64, E2::Float64, tmax::Int64, A::Float64=1000.0)::Vector{Float64}
     T = 2 * π / (E2 - E1)
-    println(T)
     t = 1:Δt:(tmax*Δt)
-    return A * cos.(T * t)
+    return A * cos.(2π * t / T)
 end
 
-function ex7(E::Vector{Float64}, c::Matrix{Float64}, l::Float64, n::Int16, tmax::Int64=100)::Nothing
+function ex7(E::Vector{Float64}, c::Matrix{Float64}, l::Float64, n::Int16, tmax::Int64=220)::Nothing
     H, S = get_global_matrix(l, n)
     X = get_global_x_matrix(l, n)
 
@@ -126,15 +124,17 @@ function ex7(E::Vector{Float64}, c::Matrix{Float64}, l::Float64, n::Int16, tmax:
             calculate_psi_element(element, ψ, n)
         end
         h = plot_psi(ψ, "t=$t", n, l, false)
-        #savefig("output/frames/psi_t=$t.png")
+        savefig("output/frames/psi_t=$t.png")
         frame(anim, h)
     end
     gif(anim, "output/psi.gif")
 
-    #plot(1:Δt:(tmax*Δt), x_theo, label="x_theo")
-    plot(1:Δt:(tmax*Δt), x, label="x")
-    xlabel!("t")
-    ylabel!("x")
+    times::Vector{Float64} = (1:Δt:(tmax*Δt)) * t0
+    # plot(times, x_theo, label="x_theo")
+    plot(times, x * L0, label="x")
+    println(caluculate_maxima(times, x))
+    xlabel!("t [ps]")
+    ylabel!("x [nm]")
     savefig("output/x.png")
     return nothing
 end
@@ -147,31 +147,23 @@ function main()
         mkdir("output")
     end
     n::Int16 = 10
-    l::Float64 = 100 / L0
-    # @time print_elements(n, l)
-    # save_elements(n, l)
+    l::Float64 = 80 / L0
+    @time print_elements(n, l)
+    save_elements(n, l)
 
-    # @time ex2(n)
+    @time ex2(n)
 
-    # ex3
-    # size::Int16 = 4
-    # println("Lokalna macierz S.")
-    # print_table(get_matrix((i, j) -> get_s_element(i, j, l, n)), size)
-    # print_table(get_matrix((i, j) -> get_s_element(i, j, l, n)) / get_a(l, n)^2 * 36, size)
 
-    # ex4
-    # println("Lokalna macierz t.")
-    # print_table(get_matrix(get_t_element), size)
-    # print_table(get_matrix(get_t_element) * 6 * 2 * M, size)
 
-    # @time ex4a()
 
-    # n = 2
-    # @time ex5(n)
-    # n = 5
-    # @time ex5(n)
-    # n = 10
-    # @time ex5(n)
+    @time ex4a()
+
+    n = 2
+    @time ex5(n)
+    n = 5
+    @time ex5(n)
+    n = 10
+    @time ex5(n)
 
     n = 10
     E, c = @time ex6(l, n)

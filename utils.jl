@@ -41,5 +41,15 @@ function g(i::Int64, ξ1::Float64, ξ2::Float64)::Float64
     return [g1, g2, g3, g4][i](ξ1, ξ2)
 end
 
+function caluculate_maxima(x::Vector{Float64}, y::Vector{Float64})::Vector{Float64}
+    maxima = []
+    for i in 2:length(y)-1
+        if y[i] > y[i-1] && y[i] > y[i+1]
+            push!(maxima, x[i])
+        end
+    end
+    return maxima
+end
+
 
 

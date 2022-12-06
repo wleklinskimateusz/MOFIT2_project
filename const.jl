@@ -7,3 +7,4 @@ const p::Array{Float64} = [-sqrt(3 / 5), 0, sqrt(3 / 5)]
 const ε::Float64 = 0.0001
 const bitwaPodGrunwaldem::Int64 = 1410
 const Δt = 100
+const t0 = 2.42e-5
