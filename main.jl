@@ -78,7 +78,7 @@ function ex5(n::Int16)::Nothing
     return nothing
 end
 
-function ex6(l::Float64, n::Int16)::Tuple{Vector{Float64},Matrix{Float64}}
+function ex6(l::Float64, n::Int16)
     E, c = solve_eigenproblem(l, n, 6)
     ψ = zeros(20 * 2 * n + 1, 20 * 2 * n + 1)
     for state in 1:6
@@ -89,10 +89,6 @@ function ex6(l::Float64, n::Int16)::Tuple{Vector{Float64},Matrix{Float64}}
         plot_psi(ψ, "psi_$state", n, l)
     end
     return E, c
-end
-
-function get_normalised_c(c::Vector{Float64}, S::Matrix{Float64})::Vector{Float64}
-    return c ./ sqrt(c' * S * c)
 end
 
 function get_x_analytical(E1::Float64, E2::Float64, tmax::Int64, A::Float64=1.0)::Vector{Float64}
@@ -106,33 +102,37 @@ function ex7(E::Vector{Float64}, c::Matrix{Float64}, l::Float64, n::Int16, tmax:
     H, S = get_global_matrix(l, n)
     X = get_global_x_matrix(l, n)
 
-    c1::Vector{Float64} = get_normalised_c(c[1, :], S)
-    c2::Vector{Float64} = get_normalised_c(c[2, :], S)
+    c1::Vector{ComplexF64} = c[:, 1]
+    c2::Vector{ComplexF64} = c[:, 2]
     d::Vector{ComplexF64} = c1 + c2
 
     E1, E2 = E[1:2]
-    x_theo = get_x_analytical(E1, E2, tmax, 0.6)
+    # x_theo = get_x_analytical(E1, E2, tmax, 0.6)
     x::Vector{Float64} = zeros(tmax)
     ψ = zeros(20 * 2 * n + 1, 20 * 2 * n + 1)
     anim::Animation = Animation()
+    # if output/frames doesnt exist, create it
+    if !isdir("output/frames")
+        mkdir("output/frames")
+    end
 
-    times = 1:Δt:(tmax*Δt)
     for t in 1:tmax
         d = inv(get_matrix_left(H, S, n)) * get_matrix_right(H, S, n) * d
-        # hermitian transpose
         x[t] = real(d' * X * d)
-        d_abs2 = real(d' .* d)
+
+        d_abs2 = abs2.(d)
         populate_nodes(ψ, (i, n, l) -> d_abs2[i], n, l)
         for element in 1:4*n^2
             calculate_psi_element(element, ψ, n)
         end
         h = plot_psi(ψ, "t=$t", n, l, false)
+        #savefig("output/frames/psi_t=$t.png")
         frame(anim, h)
     end
     gif(anim, "output/psi.gif")
 
-    plot(times, x_theo, label="x_theo")
-    plot!(times, x, label="x")
+    #plot(1:Δt:(tmax*Δt), x_theo, label="x_theo")
+    plot(1:Δt:(tmax*Δt), x, label="x")
     xlabel!("t")
     ylabel!("x")
     savefig("output/x.png")
@@ -166,17 +166,17 @@ function main()
 
     # @time ex4a()
 
-    n = 2
-    @time ex5(n)
+    # n = 2
+    # @time ex5(n)
     # n = 5
     # @time ex5(n)
     # n = 10
     # @time ex5(n)
 
-    # n = 10
-    #E, c = @time ex6(l, n)
-    # solve_eigenproblem(l, n, 6)
-    # @time ex7(E, c, 100.0, n)
+    n = 10
+    E, c = @time ex6(l, n)
+    println(E * R)
+    @time ex7(E, c, l, n)
 
 end
 
