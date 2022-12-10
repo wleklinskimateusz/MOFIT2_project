@@ -5,6 +5,7 @@ to install the dependencies open up julia and type:
 ```julia
 using Pkg
 Pkg.add("Plots")
+Pkg.add("LinearAlgebra")
 ```
 and close julia.
 
